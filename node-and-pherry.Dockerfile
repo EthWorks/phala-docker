@@ -49,7 +49,7 @@ RUN cd phala-blockchain && \
 
 # ====
 
-FROM ubuntu:20.04
+FROM ubuntu:20.04 as node
 
 ARG DEBIAN_FRONTEND='noninteractive'
 
@@ -75,3 +75,28 @@ EXPOSE 30333
 ENTRYPOINT ["/usr/bin/tini", "--"]
 
 CMD ["/bin/bash", "./start_node.sh"]
+
+# ====
+
+FROM ubuntu:20.04 as pherry
+
+ARG DEBIAN_FRONTEND='noninteractive'
+
+WORKDIR /root
+
+RUN apt-get update && \
+    apt-get install -y apt-utils apt-transport-https software-properties-common readline-common curl vim wget gnupg gnupg2 gnupg-agent ca-certificates tini
+
+COPY --from=builder /root/pherry .
+ADD dockerfile.d/start_pherry.sh ./start_pherry.sh
+
+ENV RUST_LOG="info"
+ENV PRUNTIME_ENDPOINT='http://127.0.0.1:8000'
+ENV PHALA_NODE_WS_ENDPOINT='ws://127.0.0.1:9944'
+ENV MNEMONIC=''
+ENV EXTRA_OPTS='-r'
+ENV SLEEP_BEFORE_START=0
+
+ENTRYPOINT ["/usr/bin/tini", "--"]
+
+CMD ["/bin/bash", "./start_pherry.sh"]

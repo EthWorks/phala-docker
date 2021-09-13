@@ -12,7 +12,8 @@ services:
   phala-node:
     build:
       context: .
-      dockerfile: node.Dockerfile
+      dockerfile: node-and-pherry.Dockerfile
+      target: node
     ports:
       - 9944:9944
       - 9933:9933
@@ -32,7 +33,8 @@ services:
   phala-pherry:
     build:
       context: .
-      dockerfile: pherry.Dockerfile
+      dockerfile: node-and-pherry.Dockerfile
+      target: pherry
     depends_on:
       - phala-node
       - phala-pruntime
