@@ -36,6 +36,8 @@ services:
     depends_on:
       - phala-node
       - phala-pruntime
+    environment: 
+      - SLEEP_BEFORE_START=10
     restart: on-failure
     entrypoint: [
       "/root/pherry",

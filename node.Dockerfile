@@ -1,9 +1,10 @@
-FROM ubuntu:20.04 AS builder
+FROM ubuntu:20.04 AS base
 
 ARG DEBIAN_FRONTEND='noninteractive'
 ARG RUST_TOOLCHAIN='nightly-2021-07-03'
 ARG PHALA_GIT_REPO='https://github.com/j-szulc/phala-blockchain'
-ARG PHALA_GIT_TAG='master'
+ARG PHALA_GIT_TAG_BASE='master'
+# ARG PHALA_GIT_TAG='poc'
 
 WORKDIR /root
 
@@ -13,15 +14,38 @@ RUN apt-get update && \
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain="${RUST_TOOLCHAIN}" && \
     $HOME/.cargo/bin/rustup target add wasm32-unknown-unknown --toolchain "${RUST_TOOLCHAIN}"
 
-RUN echo "Compiling Phala Blockchain from $PHALA_GIT_REPO:$PHALA_GIT_TAG..." && \
-    git clone --depth 1 --recurse-submodules --shallow-submodules -j 8 -b ${PHALA_GIT_TAG} ${PHALA_GIT_REPO} phala-blockchain && \
+RUN echo "Compiling Phala Blockchain from $PHALA_GIT_REPO:$PHALA_GIT_TAG_BASE..." && \
+    git clone --depth 1 --recurse-submodules --shallow-submodules -j 8 -b ${PHALA_GIT_TAG_BASE} ${PHALA_GIT_REPO} phala-blockchain && \
     cd phala-blockchain && \
-    PATH="$HOME/.cargo/bin:$PATH" cargo build --release && \
-    cp ./target/release/phala-node /root && \
-    cp ./target/release/pherry /root && \
+    PATH="$HOME/.cargo/bin:$PATH" cargo build
+
+## neccessary due to an open bug in rustc
+## https://github.com/rust-lang/rust/issues/84970
+RUN cd phala-blockchain && \ 
+    PATH="$HOME/.cargo/bin:$PATH" cargo clean -p phala-node-runtime && \
+    PATH="$HOME/.cargo/bin:$PATH" cargo clean -p phala-node
+
+FROM base AS builder
+
+## If any modifications have been made on top of master,
+## to avoid unneccesary recompilation
+## this script will checkout $PHALA_GIT_TAG branch
+## and apply incremental build
+
+ARG PHALA_GIT_REPO='https://github.com/j-szulc/phala-blockchain'
+ARG PHALA_GIT_TAG='poc'
+
+RUN echo "Applying $PHALA_GIT_REPO:$PHALA_GIT_TAG branch..." && \
+    cd phala-blockchain && \
+    git checkout $PHALA_GIT_TAG && \
+    PATH="$HOME/.cargo/bin:$PATH" cargo build
+
+RUN cd phala-blockchain && \
+    cp ./target/debug/phala-node /root && \
+    cp ./target/debug/pherry /root && \
     PATH="$HOME/.cargo/bin:$PATH" cargo clean && \
     rm -rf /root/.cargo/registry && \
-    rm -rf /root/.cargo/git
+    rm -rf /root/.cargo/git 
 
 # ====
 
