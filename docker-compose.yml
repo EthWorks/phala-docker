@@ -29,29 +29,18 @@ services:
       - 8000:8000
     entrypoint: ["/bin/bash", "start_pruntime.sh"]
   
-  phala-phost:
+  phala-pherry:
     build:
       context: .
-      dockerfile: phost.Dockerfile
+      dockerfile: pherry.Dockerfile
     depends_on:
       - phala-node
       - phala-pruntime
     restart: on-failure
     entrypoint: [
-      "/root/phost",
+      "/root/pherry",
       "--dev",
       "--substrate-ws-endpoint=ws://phala-node:9944",
       "--pruntime-endpoint=http://phala-pruntime:8000",
     ]
-
-  phala-console:
-    build:
-      context: .
-      dockerfile: phala-console.Dockerfile
-    depends_on:
-      - phala-node
-      - phala-pruntime
-    entrypoint: "/bin/true"
-    
-volumes:
-  diem-data:
+  
