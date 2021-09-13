@@ -1,7 +1,8 @@
 FROM ubuntu:20.04 AS base
 
 ARG DEBIAN_FRONTEND='noninteractive'
-ARG RUST_TOOLCHAIN='nightly-2021-07-03'
+# ARG RUST_TOOLCHAIN='nightly-2021-07-03'
+ARG RUST_TOOLCHAIN='stable'
 ARG PHALA_GIT_REPO='https://github.com/j-szulc/phala-blockchain'
 ARG PHALA_GIT_TAG_BASE='master'
 # ARG PHALA_GIT_TAG='poc'
@@ -33,7 +34,7 @@ FROM base AS builder
 ## and apply incremental build
 
 ARG PHALA_GIT_REPO='https://github.com/j-szulc/phala-blockchain'
-ARG PHALA_GIT_TAG='poc'
+ARG PHALA_GIT_TAG='master'
 
 RUN echo "Applying $PHALA_GIT_REPO:$PHALA_GIT_TAG branch..." && \
     cd phala-blockchain && \

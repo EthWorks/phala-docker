@@ -1,15 +1,16 @@
-FROM ubuntu:20.04 AS base
+FROM ubuntu:20.04 AS builder
 
 ARG DEBIAN_FRONTEND='noninteractive'
-ARG RUST_TOOLCHAIN='nightly-2021-07-03'
+# ARG RUST_TOOLCHAIN='nightly-2021-07-03'
+ARG RUST_TOOLCHAIN='stable'
 ARG PHALA_GIT_REPO='https://github.com/j-szulc/phala-blockchain'
-ARG PHALA_GIT_REPO='https://github.com/Phala-Network/phala-blockchain.git'
+# ARG PHALA_GIT_REPO='https://github.com/Phala-Network/phala-blockchain.git'
 ARG PHALA_GIT_TAG_BASE='master'
 
-ARG SGX_MODE="SW"
+ARG SGX_MODE="HW"
 ARG SGX_SDK_DOWNLOAD_URL="https://download.01.org/intel-sgx/sgx-linux/2.14/distro/ubuntu20.04-server/sgx_linux_x64_sdk_2.14.100.2.bin"
-ARG IAS_SPID=''
-ARG IAS_API_KEY=''
+ARG IAS_SPID='a103372c6db042f5a2b365656ce7a9fd'
+ARG IAS_API_KEY='62fa00964f704385bbce7b8f24ee687f'
 ARG IAS_ENV='DEV'
 ARG SGX_SIGN_KEY_URL=''
 ARG SGX_ENCLAVE_CONFIG_URL=''
@@ -33,19 +34,7 @@ RUN git clone --depth 1 --recurse-submodules --shallow-submodules -j 8 -b ${PHAL
     cd phala-blockchain/standalone/pruntime && \
     PATH="$PATH:$HOME/.cargo/bin" SGX_SDK="/opt/intel/sgxsdk" SGX_MODE="$SGX_MODE" make 
 
-FROM base as builder
-
-## If any modifications have been made on top of master,
-## to avoid unneccesary recompilation
-## this script will checkout $PHALA_GIT_TAG branch
-## and apply incremental build
-
-ARG SGX_MODE
-ARG PHALA_GIT_TAG='master'
-
-RUN cd phala-blockchain/standalone/pruntime && \
-    git checkout $PHALA_GIT_TAG && \
-    PATH="$PATH:$HOME/.cargo/bin" SGX_SDK="/opt/intel/sgxsdk" SGX_MODE="$SGX_MODE" make &&\
+RUN cd phala-blockchain/standalone/pruntime &&\
     cp ./bin/app /root/ && \
     cp ./bin/enclave.signed.so /root/ && \
     cp ./bin/Rocket.toml /root/ && \
@@ -64,7 +53,7 @@ WORKDIR /root
 RUN apt-get update && \
     apt-get install -y apt-utils apt-transport-https software-properties-common readline-common curl vim wget gnupg gnupg2 gnupg-agent ca-certificates tini
 
-ARG SGX_MODE="SW"
+ARG SGX_MODE
 
 RUN curl -fsSL https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key | apt-key add - && \
     add-apt-repository "deb https://download.01.org/intel-sgx/sgx_repo/ubuntu focal main" && \

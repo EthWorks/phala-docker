@@ -29,7 +29,7 @@ services:
     ports:
       - 8000:8000
     entrypoint: ["/bin/bash", "start_pruntime.sh"]
-  
+      
   phala-pherry:
     build:
       context: .
